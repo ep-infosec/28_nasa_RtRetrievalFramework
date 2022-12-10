@@ -1,0 +1,63 @@
+#!/bin/bash
+# Copy data needed to run Level 2 on Pleiades system.
+
+usage()
+{
+    cat <<EOF
+Usage $0 [options] <scf user name> <port> <install directory>
+
+This copies the data needed from the soot system at JPL for testing
+and running Level 2 Full physics.  You should copy this data to the
+Lustre system (e.g., /nobackup)
+
+Since your Pleiades username likely doesn't match the soot file name,
+you need to supply the user name that we use when copying the data.
+
+You also need to supply the port that was reverse forwarded when you
+logged into Pleiades (e.g., ssh -R 2210:localhost:22 pfe, then the port
+is 2210).
+
+OPTIONS:
+   -h Show this message
+EOF
+}
+while getopts “h” OPTION; do
+    case $OPTION in
+        h)
+            usage
+            exit 1
+            ;;
+        ?)
+            usage
+            exit
+            ;;
+    esac
+done
+shift $((OPTIND-1))
+if [ -z "$1" ]; then
+    usage
+    exit 1
+fi
+if [ -z "$2" ]; then
+    usage
+    exit 1
+fi
+
+# Die on error
+set -e
+
+# Create parent directory
+mkdir -p $3
+
+# Copy all data used in the runs in one command, so we only need to
+# enter the password once. This is:
+# 1. absco data used in runs
+# 2. merra data used in runs
+# 3. absco data used in unit tests
+# 4. integration test data
+
+rsync -avz --copy-links --progress --inplace --rsh "ssh -p $2" $1@localhost:/groups/algorithm/l2_fp/pleiades_data/ $3/
+
+
+
+
